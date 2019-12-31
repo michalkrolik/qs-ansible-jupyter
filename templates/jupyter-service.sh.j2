@@ -1,0 +1,2 @@
+cd {{jupyter_install_dir}}/jupyterhome/ && jupyter notebook --port=49151 --ip='{{ ansible_host }}' --no-browser &> {{jupyter_install_dir}}/.jupyter/jupyter-service.log
+

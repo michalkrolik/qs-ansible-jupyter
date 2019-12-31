@@ -1,0 +1,73 @@
+---
+- hosts: jupyter
+  vars:
+    jupyter_install_dir: /home/ansible
+
+  tasks:
+  - name: Install epel-release
+    yum:
+      name:
+        - epel-release
+        - python3-pip
+      state: latest
+
+  - name: Install pip3
+    pip:
+      name: jupyter
+      executable: pip3.6
+
+  - name: Create Jupyter's config directories
+    file:
+      path:  "{{ jupyter_install_dir }}/{{item}}/"
+      recurse: true
+      state: directory
+      mode: u+rwx,g+rwx
+    with_items:
+      - jupyterhome
+      - .jupyter
+      - .local/share/jupyter/
+      - .local/share/jupyter/kernels/
+      - .ipython/profile_default/startup
+
+  - name: copy Jupyter configuration with password
+    template:
+      src: templates/jupyter_notebook_config.json.j2
+      dest: "{{ jupyter_install_dir }}/.jupyter/jupyter_notebook_config.json"
+      mode: u+rwx,g+rwx
+
+  - name: Copy service script
+    template:
+      src: templates/jupyter-service.sh.j2
+      dest: "{{ jupyter_install_dir }}/.jupyter/jupyter-service.sh"
+      mode: u+rwx,g+rwx
+    become: True
+    become_user: root
+    notify: "restart jupyter"
+
+  - name: setup systemctl service unit jupyter
+    template:
+      src: templates/jupyter.service.j2
+      dest: "/etc/systemd/system/jupyter.service"
+      mode: u+rwx,g+rwx
+    become: True
+    become_user: root
+    notify: "restart jupyter"
+
+
+  handlers:
+  - name: Enable jupyter.service
+    systemd:
+      name: jupyter.service
+      enabled: yes
+    become: True
+    become_user: root
+    listen: "restart jupyter"
+        
+  - name: Start the service
+    systemd:
+      name: jupyter
+      state: restarted
+    become: True
+    become_user: root
+    listen: "restart jupyter"
+

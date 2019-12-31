@@ -1,0 +1,14 @@
+[Unit]
+Description=Jupyter Agent
+Wants=network-online.target
+After=network-online.target network.target
+ 
+[Service]
+WorkingDirectory={{jupyter_install_dir}}/jupyterhome/
+ExecStart=/bin/bash {{jupyter_install_dir}}/.jupyter/jupyter-service.sh
+User=ansible
+Restart=on-abort
+ 
+[Install]
+WantedBy=multi-user.target
+
